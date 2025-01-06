@@ -91,13 +91,14 @@ def api_form_edit(request, form_id):
 @login_required
 def web_form_edit(request, form_id):
     form = get_object_or_404(Form, id=form_id, created_by=request.user)
+    questions = form.questions.all()  # Fetch all questions related to the form
     if request.method == 'POST':
         form_data = request.POST
         form.title = form_data.get('title', form.title)
         form.description = form_data.get('description', form.description)
         form.save()
         return redirect('web_form_edit', form_id=form.id)
-    return render(request, 'forms/edit.html', {'form': form})
+    return render(request, 'forms/edit.html', {'form': form, 'questions': questions})
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
