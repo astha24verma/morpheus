@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Form{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% csrf_token %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h1 class="card-title mb-4">Edit Form Details</h1>
+                    <form id="form-details">
+                        <div class="mb-3">
+                            <label for="form-title" class="form-label">Form Title</label>
+                            <input type="text" class="form-control" id="form-title" value="{{ form.title }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="form-description" class="form-label">Description</label>
+                            <textarea class="form-control" id="form-description" rows="3">{{ form.description }}</textarea>
+                        </div>
+                        <button type="button" id="save-form-details" class="btn btn-primary">Save Form Details</button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="question-list" class="mb-4">
+                {% for question in questions %}
+                <div class="question-item card mb-3">
+                    <div class="card-body">
+                        <h3 class="card-title">{{ question.question_text }}</h3>
+                        <p class="card-text">Type: {{ question.get_question_type_display }}</p>
+                        {% if question.options %}
+                        <p class="card-text">Options: {{ question.options|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <button type="button" id="add-question" class="btn btn-primary mb-4">Add Question</button>
+
+            <div id="question-form" class="card" style="display: none">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="question-type" class="form-label">Question Type</label>
+                        <select id="question-type" class="form-select">
+                            {% for type, display in question_types %}
+                            <option value="{{ type }}">{{ display }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="question-text" class="form-label">Question Text</label>
+                        <input type="text" id="question-text" class="form-control" placeholder="Enter your question" required>
+                    </div>
+
+                    <div id="options-container" class="mb-3" style="display: none">
+                        <label for="options" class="form-label">Options</label>
+                        <input type="text" id="options" class="form-control" placeholder="Option 1, Option 2, Option 3">
+                    </div>
+
+                    <button type="button" id="save-question" class="btn btn-success">Save Question</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const questionType = document.getElementById('question-type');
+    const optionsContainer = document.getElementById('options-container');
+    const addQuestionBtn = document.getElementById('add-question');
+    const questionForm = document.getElementById('question-form');
+    const saveQuestionBtn = document.getElementById('save-question');
+
+    // Show/hide options based on question type
+    questionType.addEventListener('change', function() {
+        optionsContainer.style.display = 
+            (this.value === 'dropdown' || this.value === 'checkbox') ? 'block' : 'none';
+    });
+
+    // Show/hide question form
+    addQuestionBtn.addEventListener('click', function() {
+        questionForm.style.display = questionForm.style.display === 'none' ? 'block' : 'none';
+    });
+
+    // Save question button click handler
+    saveQuestionBtn.addEventListener('click', saveQuestion);
+});
+
+async function saveQuestion() {
+    const questionText = document.getElementById('question-text').value;
+    const questionType = document.getElementById('question-type').value;
+    const options = document.getElementById('options').value;
+
+    if (!questionText) {
+        alert('Question text is required');
+        return;
+    }
+
+    if ((questionType === 'dropdown' || questionType === 'checkbox') && !options) {
+        alert('Options are required for dropdown or checkbox questions');
+        return;
+    }
+
+    const data = {
+        question_text: questionText,
+        question_type: questionType,
+        options: questionType === 'text' ? [] : options.split(',').map(opt => opt.trim()),
+        order: document.querySelectorAll('.question-item').length
+    };
+
+    try {
+        const response = await fetch(window.location.href, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            // Clear form fields
+            document.getElementById('question-text').value = '';
+            document.getElementById('options').value = '';
+            
+            // Hide the form
+            document.getElementById('question-form').style.display = 'none';
+            
+            // Show success message
+            alert('Question saved successfully!');
+            
+            // Reload the page to show the new question
+            location.reload();
+        } else {
+            alert(result.message || 'Error saving question');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error saving question: ' + error.message);
+    }
+}
+
+async function saveFormDetails() {
+    const title = document.getElementById('form-title').value;
+    const description = document.getElementById('form-description').value;
+
+    if (!title) {
+        alert('Form title is required');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${window.location.href}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+            body: new URLSearchParams({ title, description })
+        });
+
+        if (response.redirected) {
+            alert('Form details updated successfully!');
+            window.location.href = response.url;  // Follow the redirect
+        } else if (response.ok) {
+            alert('Form details updated successfully!');
+            location.reload();  // Reload to reflect changes
+        } else {
+            alert('Error updating form details');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error updating form details: ' + error.message);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Add event listener for form details save button
+    document.getElementById('save-form-details').addEventListener('click', saveFormDetails);
+    
+    // Existing event listeners remain the same
+});
+</script>
+{% endblock %}

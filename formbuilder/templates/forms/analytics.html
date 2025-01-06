@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load form_filters %}
+
+{% block title %}Analytics - {{ form.title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Analytics: {{ form.title }}</h1>
+    <p class="lead">Total Form Responses: {{ total_responses }}</p>
+
+    {% for question in form.questions.all %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">{{ question.question_text }}</h5>
+            <p class="text-muted">Responses: {{ analytics|get_item:question.id|get_item:'total_responses' }}</p>
+
+            {% with question_data=analytics|get_item:question.id %}
+                {% if question_data.data %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Option</th>
+                                    <th>Count</th>
+                                    <th>Percentage</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for option, count in question_data.data %}
+                                <tr>
+                                    <td>{{ option }}</td>
+                                    <td>{{ count }}</td>
+                                    <td>
+                                        {% if question_data.total_responses > 0 %}
+                                            {{ count|multiply:100|divide:question_data.total_responses|floatformat:1 }}%
+                                        {% else %}
+                                            0%
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p>No responses yet</p>
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

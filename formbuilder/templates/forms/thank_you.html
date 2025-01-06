@@ -1,0 +1,14 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container text-center">
+  <h1>Thank You!</h1>
+  <p class="lead">Your response to "{{ form.title }}" has been recorded.</p>
+  <div class="mt-4">
+    <a href="{% url 'web_form_submit' form.id %}" class="btn btn-primary"
+      >Submit Another Response</a
+    >
+    <a href="{% url 'web_form_analytics' form.id %}" class="btn btn-info"
+      >View Analytics</a
+    >
+  </div>
+</div>
+{% endblock %}
