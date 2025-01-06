@@ -11,7 +11,7 @@
 - [Contact](#contact)
 
 ## Introduction
-The Form Builder application is designed to allow Admins to create forms similar to Google Forms. Admins can create forms with various question types, and users can submit responses anonymously. Both Admins and users can access analytics for each form.
+The Form Builder application is designed to allow Admins to create forms similar to Google Forms. Admins can create forms with various question types, and users can submit responses anonymously. Both Admins and users can access analytics.
 
 ## Features
 
@@ -102,8 +102,6 @@ The Form Builder application is designed to allow Admins to create forms similar
 
 ### Viewing Analytics
 - Access the analytics page for any form to view response data and question-specific insights.
-
-## Code Structure
 
 ## Postman Collection
 
